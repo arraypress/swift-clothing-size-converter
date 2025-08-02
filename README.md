@@ -251,7 +251,7 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 ### Development Setup
 
 ```bash
-git clone https://github.com/yourusername/swift-clothing-size-converter.git
+git clone https://github.com/arraypress/swift-clothing-size-converter.git
 cd swift-clothing-size-converter
 swift test
 ```
