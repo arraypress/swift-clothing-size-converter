@@ -586,6 +586,40 @@ final class ClothingSizeConverterTests: XCTestCase {
         XCTAssertEqual(plusSize, "54")
     }
     
+    func testEdgeCaseConversions() {
+        // Test boundary sizes
+        let tinyShoe = ClothingSizeConverter.convert("4", from: .us, to: .eu, type: .shoe, gender: .women)
+        let hugeShoe = ClothingSizeConverter.convert("16", from: .us, to: .eu, type: .shoe, gender: .women)
+        
+        // Test unusual but valid inputs
+        let paddedSize = ClothingSizeConverter.convert("  9.5  ", from: .us, to: .eu, type: .shoe, gender: .women)
+        XCTAssertEqual(paddedSize, "39.5", "Should handle padded input")
+    }
+    
+    func testLargeDatasetConversion() {
+        let hugeSizeList = Array(0..<1000).map { "9.\($0 % 10)" }
+        measure {
+            let _ = ClothingSizeConverter.convertMultiple(hugeSizeList, from: .us, to: .eu, type: .shoe, gender: .women)
+        }
+    }
+
+    func testUnsupportedSystemCombinations() {
+        // Test systems that might not support certain types
+        let result = ClothingSizeConverter.convert("M", from: .jp, to: .kr, type: .swimwear, gender: .women)
+        // Should handle gracefully
+    }
+    
+    func testCommonUserWorkflows() {
+        // Simulate a shopping cart with mixed items
+        let shoeSize = ClothingSizeConverter.convert("9", from: .us, to: .eu, type: .shoe, gender: .women)
+        let dressSize = ClothingSizeConverter.convert("8", from: .us, to: .eu, type: .dress, gender: .women)
+        let braSize = ClothingSizeConverter.convert("34B", from: .us, to: .eu, type: .bra)
+        
+        XCTAssertNotNil(shoeSize)
+        XCTAssertNotNil(dressSize)
+        XCTAssertNotNil(braSize)
+    }
+    
     // MARK: - Performance Tests
     
     func testPerformanceMultipleConversions() {
