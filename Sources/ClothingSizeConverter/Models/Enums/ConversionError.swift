@@ -1,3 +1,12 @@
+//
+//  ConversionError.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+import Foundation
+
 /// Errors that can occur during size conversion
 public enum ConversionError: Error, LocalizedError, Equatable, Sendable {
     case invalidSize(String)

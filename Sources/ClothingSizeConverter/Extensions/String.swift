@@ -1,3 +1,12 @@
+//
+//  String.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+import Foundation
+
 internal extension String {
     /// Check if string matches a regex pattern
     func matches(_ pattern: String) -> Bool {

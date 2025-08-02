@@ -5,6 +5,7 @@
 //  Created by David Sherlock on 02/08/2025.
 //
 
+import Foundation
 
 /// Converter for hat sizes with fractional support
 ///
@@ -127,4 +128,5 @@ internal struct HatConverter: SizeConverterProtocol {
         }
         return size
     }
+    
 }

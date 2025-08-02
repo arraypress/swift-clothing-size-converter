@@ -1,3 +1,12 @@
+//
+//  SizeType.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+import Foundation
+
 /// Types of clothing and accessories that can be converted
 public enum SizeType: String, CaseIterable, Sendable {
     case shoe = "shoe"

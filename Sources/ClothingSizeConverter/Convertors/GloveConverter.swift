@@ -1,3 +1,12 @@
+//
+//  GloveConverter.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+import Foundation
+
 /// Converter for glove sizes with letter and numeric support
 ///
 /// Supports XS-XL letter sizes and numeric sizes 6-10.

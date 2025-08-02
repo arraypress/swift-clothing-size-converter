@@ -2,16 +2,8 @@
 //  ShoeConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
-//
-
-
-//
-//  ShoeConverter.swift
-//  ClothingSizeConverter
-//
 //  Shoe size converter with comprehensive international support
-//  Created on 28/07/2025.
+//  Created by David Sherlock on 02/08/2025.
 //
 
 import Foundation
@@ -528,4 +520,5 @@ internal struct ShoeConverter: SizeConverterProtocol {
         
         return "Unknown"
     }
+    
 }

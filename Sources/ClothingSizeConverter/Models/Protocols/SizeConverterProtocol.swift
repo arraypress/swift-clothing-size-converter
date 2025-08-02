@@ -1,3 +1,11 @@
+//
+//  SizeConverterProtocol.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+
 /// Protocol for size converters
 internal protocol SizeConverterProtocol: Sendable {
     /// Convert a size between systems

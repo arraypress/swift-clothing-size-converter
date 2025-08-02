@@ -5,7 +5,7 @@
 //  Created by David Sherlock on 02/08/2025.
 //
 
-
+import Foundation
 
 /// Converter for children's clothing sizes across age groups
 ///

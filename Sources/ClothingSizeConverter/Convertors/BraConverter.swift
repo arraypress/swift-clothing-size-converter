@@ -2,16 +2,8 @@
 //  BraConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
-//
-
-
-//
-//  BraConverter.swift
-//  ClothingSizeConverter
-//
 //  Bra size converter with comprehensive international support and cup sizing
-//  Created on 28/07/2025.
+//  Created by David Sherlock on 02/08/2025.
 //
 
 import Foundation
@@ -45,15 +37,15 @@ import Foundation
 /// ## Example Usage
 /// ```swift
 /// let converter = BraConverter()
-/// 
+///
 /// // Convert US 34B to EU
 /// let result = converter.convert(size: "34B", from: .us, to: .eu, gender: .women)
 /// // Result: "75B"
-/// 
+///
 /// // Convert with cup size differences
 /// let ukResult = converter.convert(size: "34DDD", from: .us, to: .uk, gender: .women)
 /// // Result: "34E" (UK uses E instead of DDD)
-/// 
+///
 /// // Australian sizing
 /// let auResult = converter.convert(size: "34B", from: .us, to: .au, gender: .women)
 /// // Result: "12B" (AU uses different band numbering)
@@ -252,7 +244,7 @@ internal struct BraConverter: SizeConverterProtocol {
     func isValid(size: String, system: SizeSystem, gender: Gender) -> Bool {
         guard let (band, cup) = parseBraSize(size.normalizedSize) else { return false }
         return bandConversions[system]?.keys.contains(band) == true &&
-               cupConversions[system]?.keys.contains(cup) == true
+        cupConversions[system]?.keys.contains(cup) == true
     }
     
     /// Get suggestions for invalid or ambiguous bra sizes
@@ -349,4 +341,5 @@ internal struct BraConverter: SizeConverterProtocol {
         
         return notes.isEmpty ? nil : notes.joined(separator: ". ")
     }
+    
 }

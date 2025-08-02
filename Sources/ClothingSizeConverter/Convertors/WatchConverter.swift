@@ -1,3 +1,12 @@
+//
+//  WatchConverter.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+import Foundation
+
 /// Converter for watch case sizes
 ///
 /// Watch sizes are typically universal (38mm, 42mm, etc.) based on case diameter.
@@ -37,4 +46,5 @@ internal struct WatchConverter: SizeConverterProtocol {
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
         return ["38", "40", "42", "44", "46"]
     }
+    
 }

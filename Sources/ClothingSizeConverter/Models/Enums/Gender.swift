@@ -5,6 +5,7 @@
 //  Created by David Sherlock on 02/08/2025.
 //
 
+import Foundation
 
 /// Gender context for sizing
 public enum Gender: String, CaseIterable, Sendable {

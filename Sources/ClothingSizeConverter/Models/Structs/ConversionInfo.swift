@@ -1,3 +1,11 @@
+//
+//  ConversionInfo.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+
 /// Comprehensive information about converter capabilities
 public struct ConversionInfo: Sendable {
     /// All supported clothing/accessory types

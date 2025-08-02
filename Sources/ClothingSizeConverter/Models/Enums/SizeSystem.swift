@@ -5,6 +5,7 @@
 //  Created by David Sherlock on 02/08/2025.
 //
 
+import Foundation
 
 /// International sizing systems
 public enum SizeSystem: String, CaseIterable, Sendable {

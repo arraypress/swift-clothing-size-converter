@@ -5,6 +5,7 @@
 //  Created by David Sherlock on 02/08/2025.
 //
 
+import Foundation
 
 /// Detailed conversion result with metadata
 public struct ConversionResult: Sendable {

@@ -1,3 +1,12 @@
+//
+//  SwimwearConverter.swift
+//  ClothingSizeConverter
+//
+//  Created by David Sherlock on 02/08/2025.
+//
+
+
+
 /// Converter for swimwear sizes with gender-specific differences
 ///
 /// Swimwear sizing differs from regular clothing, especially for women's pieces
