@@ -2,7 +2,7 @@
 //  SwimwearConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
@@ -13,7 +13,6 @@ import Foundation
 /// which may include cup sizing like bras or use different letter size mappings.
 internal struct SwimwearConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] { [.us, .uk, .eu, .au] }
-    var requiresGender: Bool { true }
     
     // Updated conversion tables - mapping each system's sizes to a normalized US numeric value
     private let womenSwimwearConversions: [SizeSystem: [String: Double]] = [
@@ -103,20 +102,20 @@ internal struct SwimwearConverter: SizeConverterProtocol {
             )
         }
         
-        // Find the target size by matching the normalized value
-        for (targetSize, targetValue) in toTable {
-            if abs(targetValue - normalizedValue) < 0.01 {
-                return ConversionResult(
-                    originalSize: size,
-                    convertedSize: targetSize,
-                    fromSystem: from,
-                    toSystem: to,
-                    type: type,
-                    gender: gender,
-                    confidence: 0.85,
-                    notes: "Swimwear sizing varies by brand and style"
-                )
-            }
+        // Find the target size by matching the normalized value. A deterministic
+        // reverse lookup is required because several keys can share a value
+        // (e.g. women's US "S", "34A" and "34B" all normalize to 4).
+        if let targetSize = toTable.sizeKey(matching: normalizedValue, preferring: normalized) {
+            return ConversionResult(
+                originalSize: size,
+                convertedSize: targetSize,
+                fromSystem: from,
+                toSystem: to,
+                type: type,
+                gender: gender,
+                confidence: 0.85,
+                notes: "Swimwear sizing varies by brand and style"
+            )
         }
         
         return ConversionResult(

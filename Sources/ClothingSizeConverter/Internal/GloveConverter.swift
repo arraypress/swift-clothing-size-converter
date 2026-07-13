@@ -2,7 +2,7 @@
 //  GloveConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
@@ -13,7 +13,6 @@ import Foundation
 /// Most systems use universal letter sizing.
 internal struct GloveConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] { [.us, .uk, .eu] }
-    var requiresGender: Bool { false }
     
     private let conversions: [SizeSystem: [String: String]] = [
         .us: ["XS": "XS", "S": "S", "M": "M", "L": "L", "XL": "XL", "6": "XS", "7": "S", "8": "M", "9": "L", "10": "XL"],

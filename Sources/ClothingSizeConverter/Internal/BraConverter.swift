@@ -3,7 +3,7 @@
 //  ClothingSizeConverter
 //
 //  Bra size converter with comprehensive international support and cup sizing
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
@@ -58,12 +58,7 @@ internal struct BraConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] {
         return [.us, .uk, .eu, .fr, .au]
     }
-    
-    /// Whether gender context is required (false - bras are women-specific)
-    var requiresGender: Bool {
-        return false
-    }
-    
+
     // MARK: - Conversion Tables
     
     /// Band size conversions (numeric component)
@@ -89,17 +84,20 @@ internal struct BraConverter: SizeConverterProtocol {
     /// Maps cup designations from different systems to normalized US cup sizes.
     /// Regional differences in cup progression require careful mapping.
     ///
-    /// **Key Differences:**
-    /// - US: A, B, C, D, DD, DDD, F, G
-    /// - UK: A, B, C, D, DD, E, F, FF (E replaces DDD, FF replaces G)
-    /// - EU/FR: A, B, C, D, E, F, G, H (E = US DD, F = US DDD)
-    /// - AU: Similar to US system
+    /// Cup letters are normalized to the US ladder **A, B, C, D, DD, DDD, G, H**.
+    /// One cup ≈ one inch of bust-minus-band, so US "F" is *the same cup* as DDD
+    /// (not a distinct larger cup) — it's accepted as an input alias but never
+    /// emitted as output. Above DDD the systems diverge:
+    /// - **US:** A, B, C, D, DD, DDD(=F), G, H
+    /// - **UK:** A, B, C, D, DD, E(=US DDD), F(=US G), FF(=US H)
+    /// - **EU/FR:** A, B, C, D, E(=US DD), F(=US DDD), G(=US G), H(=US H)
+    /// - **AU:** follows the UK ladder
     private let cupConversions: [SizeSystem: [String: String]] = [
-        .us: ["A": "A", "B": "B", "C": "C", "D": "D", "DD": "DD", "DDD": "DDD", "F": "F", "G": "G"],
-        .uk: ["A": "A", "B": "B", "C": "C", "D": "D", "DD": "DD", "E": "DDD", "F": "F", "FF": "G"],
-        .eu: ["A": "A", "B": "B", "C": "C", "D": "D", "E": "DD", "F": "DDD", "G": "F", "H": "G"],
-        .fr: ["A": "A", "B": "B", "C": "C", "D": "D", "E": "DD", "F": "DDD", "G": "F", "H": "G"],
-        .au: ["A": "A", "B": "B", "C": "C", "D": "D", "DD": "DD", "E": "DDD", "F": "F", "G": "G"]
+        .us: ["A": "A", "B": "B", "C": "C", "D": "D", "DD": "DD", "DDD": "DDD", "F": "DDD", "G": "G", "H": "H"],
+        .uk: ["A": "A", "B": "B", "C": "C", "D": "D", "DD": "DD", "E": "DDD", "F": "G", "FF": "H"],
+        .eu: ["A": "A", "B": "B", "C": "C", "D": "D", "E": "DD", "F": "DDD", "G": "G", "H": "H"],
+        .fr: ["A": "A", "B": "B", "C": "C", "D": "D", "E": "DD", "F": "DDD", "G": "G", "H": "H"],
+        .au: ["A": "A", "B": "B", "C": "C", "D": "D", "DD": "DD", "E": "DDD", "F": "G", "FF": "H"]
     ]
     
     // MARK: - Public Methods
@@ -186,24 +184,10 @@ internal struct BraConverter: SizeConverterProtocol {
             )
         }
         
-        // Find equivalent in target system
-        var targetBand: String?
-        var targetCup: String?
-        
-        for (toBand, toNormalizedBand) in toBandTable {
-            if toNormalizedBand == normalizedBand {
-                targetBand = toBand
-                break
-            }
-        }
-        
-        for (toCup, toNormalizedCup) in toCupTable {
-            if toNormalizedCup == normalizedCup {
-                targetCup = toCup
-                break
-            }
-        }
-        
+        // Find the equivalent band and cup in the target system.
+        let targetBand = canonicalKey(for: normalizedBand, in: toBandTable)
+        let targetCup = canonicalKey(for: normalizedCup, in: toCupTable)
+
         guard let finalBand = targetBand, let finalCup = targetCup else {
             return ConversionResult(
                 originalSize: size,
@@ -281,6 +265,15 @@ internal struct BraConverter: SizeConverterProtocol {
     ///
     /// - Parameter size: Normalized bra size string
     /// - Returns: Tuple of (band, cup) strings, or nil if parsing fails
+    /// Deterministic reverse lookup for the band/cup tables. When more than one
+    /// key maps to the same normalized value (e.g. US "DDD" and its alias "F"
+    /// both normalize to "DDD"), the smallest key wins — which is the canonical
+    /// "DDD", never the alias "F" — so conversions are reproducible and never
+    /// surface an alias as output.
+    private func canonicalKey<Value: Equatable>(for normalized: Value, in table: [String: Value]) -> String? {
+        table.compactMap { $0.value == normalized ? $0.key : nil }.min()
+    }
+
     private func parseBraSize(_ size: String) -> (band: String, cup: String)? {
         let pattern = #"^(\d{2,3})([A-K]+)$"#
         guard let regex = try? NSRegularExpression(pattern: pattern),

@@ -2,23 +2,36 @@
 //  ClothingSizeConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
-//
-
-
-//
-//  ClothingSizeConverter.swift
-//  ClothingSizeConverter
-//
-//  A comprehensive clothing size converter with extensive customization options
-//  Created on 28/07/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
 
-// MARK: - Main Public API
-
-public struct ClothingSizeConverter {
+/// Convert clothing, shoe, and accessory sizes between international sizing
+/// systems — entirely offline, with no API key or network access.
+///
+/// Handles shoes, clothing, dresses, bras, rings, hats, gloves, belts, pants,
+/// socks, watches, jackets, and swimwear across US, UK, EU, FR, IT, JP, AU, CN,
+/// KR, plus centimeter and inch measurements. Conversions are gender-aware and
+/// include dedicated children's (infant, toddler, youth) sizing.
+///
+/// ## Quick Start
+///
+/// ```swift
+/// import ClothingSizeConverter
+///
+/// // Simple conversion
+/// let eu = ClothingSizeConverter.convert("9.5", from: .us, to: .eu, type: .shoe, gender: .women)
+/// // "40.5"
+///
+/// // Detailed result with confidence + notes
+/// let result = ClothingSizeConverter.convertWithDetails("34B", from: .us, to: .uk, type: .bra)
+/// print(result.convertedSize ?? "", result.confidence)
+///
+/// // Batch conversion (clamped to 100)
+/// let euSizes = ["8", "9", "10"].convertSizes(from: .us, to: .eu, type: .shoe, gender: .women)
+/// ```
+public enum ClothingSizeConverter {
     
     /// Convert a size with default settings.
     ///
@@ -345,16 +358,18 @@ public extension String {
     /// "34B".isClothingSize // true
     /// ```
     var isClothingSize: Bool {
-        // Quick check for common size patterns
+        // Quick check for common size patterns. Normalize first so inputs like
+        // "9 1/2" or "Large" are recognized too.
+        let normalized = self.normalizedSize
         let patterns = [
-            #"^\d+\.?5?$"#,        // Shoe sizes: 9, 9.5
-            #"^[XS|S|M|L|XL|XXL]+$"#, // Clothing: XS, S, M, L, XL, XXL
-            #"^\d+[A-Z]+$"#,       // Bra sizes: 34B, 36DD
-            #"^\d+$"#              // Numeric: 30, 32, 34
+            #"^\d+(\.5)?$"#,                  // Shoe / numeric: 9, 9.5, 42
+            #"^(XXS|XS|S|M|L|XL|XXL|XXXL)$"#, // Letter sizes: XS…XXXL
+            #"^\d*X{1,3}L?$"#,                // Plus sizes: 1X, 2X, XXL
+            #"^\d{2,3}[A-K]+$"#               // Bra sizes: 34B, 36DD
         ]
-        
+
         return patterns.contains { pattern in
-            self.range(of: pattern, options: .regularExpression) != nil
+            normalized.range(of: pattern, options: .regularExpression) != nil
         }
     }
     

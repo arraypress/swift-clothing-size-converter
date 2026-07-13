@@ -3,7 +3,7 @@
 //  ClothingSizeConverter
 //
 //  Shoe size converter with comprehensive international support
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
@@ -48,12 +48,7 @@ internal struct ShoeConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] {
         return [.us, .uk, .eu, .au, .jp, .cm]
     }
-    
-    /// Whether gender context is required for accurate conversion
-    var requiresGender: Bool {
-        return true
-    }
-    
+
     // MARK: - Conversion Tables
     
     /// Men's shoe size conversion table
@@ -280,23 +275,21 @@ internal struct ShoeConverter: SizeConverterProtocol {
             )
         }
         
-        // Find the target size
-        for (targetSize, targetUSSize) in toTable {
-            if abs(targetUSSize - usSize) < 0.01 { // Allow for small floating point differences
-                let confidence = calculateConfidence(from: from, to: to, size: normalizedSize)
-                let notes = generateNotes(from: from, to: to, gender: gender)
-                
-                return ConversionResult(
-                    originalSize: size,
-                    convertedSize: targetSize,
-                    fromSystem: from,
-                    toSystem: to,
-                    type: type,
-                    gender: gender,
-                    confidence: confidence,
-                    notes: notes
-                )
-            }
+        // Find the target size (deterministic reverse lookup).
+        if let targetSize = toTable.sizeKey(matching: usSize, preferring: normalizedSize) {
+            let confidence = calculateConfidence(from: from, to: to, size: normalizedSize)
+            let notes = generateNotes(from: from, to: to, gender: gender)
+
+            return ConversionResult(
+                originalSize: size,
+                convertedSize: targetSize,
+                fromSystem: from,
+                toSystem: to,
+                type: type,
+                gender: gender,
+                confidence: confidence,
+                notes: notes
+            )
         }
         
         // If exact match not found, try extrapolation for extended sizes
@@ -370,10 +363,11 @@ internal struct ShoeConverter: SizeConverterProtocol {
             if let systemTable = conversions[system] {
                 let allSizes = systemTable.keys.compactMap { Double($0) }.sorted()
                 
-                // Find closest sizes
+                // Find closest sizes (formatted without a trailing ".0" so they
+                // match the table keys, e.g. "9" and "9.5" rather than "9.0").
                 for candidateSize in allSizes {
                     if abs(candidateSize - numericValue) <= 1.0 {
-                        suggestions.append(String(candidateSize))
+                        suggestions.append(String(format: "%g", candidateSize))
                     }
                 }
             }
@@ -482,25 +476,28 @@ internal struct ShoeConverter: SizeConverterProtocol {
     ///   - gender: Gender context
     /// - Returns: Extrapolated size string, or nil if extrapolation fails
     private func extrapolateSize(usSize: Double, to: SizeSystem, gender: Gender) -> String? {
-        // Simple linear extrapolation for sizes beyond our table
+        // Linear extrapolation past the top of the table, using the last two
+        // entries as the trend. Everything is guarded — no force-unwraps or
+        // out-of-bounds indexing — so an odd table can only yield nil, not a crash.
         let conversions = getConversions(for: gender)
         guard let toTable = conversions[to] else { return nil }
-        
+
         let sortedSizes = toTable.sorted { $0.value < $1.value }
-        
-        if let largest = sortedSizes.last, usSize > largest.value {
-            // Extrapolate upward
-            let secondLargest = sortedSizes[sortedSizes.count - 2]
-            let increment = largest.value - secondLargest.value
-            let steps = Int((usSize - largest.value) / increment)
-            
-            if let largestNumeric = Double(largest.key) {
-                let extrapolated = largestNumeric + (Double(steps) * (Double(largest.key)! - Double(secondLargest.key)!))
-                return String(format: "%.1f", extrapolated)
-            }
-        }
-        
-        return nil
+        guard sortedSizes.count >= 2,
+              let largest = sortedSizes.last,
+              usSize > largest.value else { return nil }
+
+        let secondLargest = sortedSizes[sortedSizes.count - 2]
+        guard let largestKey = Double(largest.key),
+              let secondKey = Double(secondLargest.key) else { return nil }
+
+        let valueSpan = largest.value - secondLargest.value
+        guard valueSpan != 0 else { return nil }
+
+        // Target-key units per one unit of normalized (US) size.
+        let keyPerValue = (largestKey - secondKey) / valueSpan
+        let extrapolated = largestKey + (usSize - largest.value) * keyPerValue
+        return String(format: "%g", extrapolated)
     }
     
     /// Get the valid size range for a system and gender

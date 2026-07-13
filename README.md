@@ -45,7 +45,7 @@ let euSize = ClothingSizeConverter.convert(
     type: .shoe,
     gender: .women
 )
-// e.g. "40.5"
+// "39.5"
 ```
 
 ### Detailed Conversion
@@ -118,6 +118,15 @@ let converted2 = sizes.convertSizes(from: .us, to: .eu, type: .shoe, gender: .wo
 ## How It Works
 
 `ClothingSizeConverter` dispatches each request to a type-specific converter (shoe, bra, ring, etc.), routing children's, infant, toddler, and youth genders to a dedicated children's converter. Conversions use industry-standard lookup tables and return a converted value plus, in detailed mode, a confidence score and explanatory notes.
+
+## Accuracy & Conventions
+
+Conversion tables are verified against standard international size charts. A few things worth knowing:
+
+- **Ring sizes** follow ISO 8653 — `EU` is the inside circumference in millimetres, `cm` is that circumference in centimetres, and `inches` is the inside diameter.
+- **Confidence scores** (from `convertWithDetails`) flag less-certain conversions — measurement-based systems, extreme sizes, and less-standardized regions score lower.
+- **Letter sizes** (S/M/L, bra cups) vary more between brands than numeric sizes, so treat them as a best-fit starting point rather than an exact equivalence.
+- **Supported systems vary by type** — shoes cover US/UK/EU/AU/JP/cm, bras cover US/UK/EU/FR/AU, and so on. Use `conversionInfo().systemsByType` to read the exact set for each type.
 
 ## Models
 

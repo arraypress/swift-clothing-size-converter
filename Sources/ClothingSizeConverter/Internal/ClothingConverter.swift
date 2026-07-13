@@ -3,7 +3,7 @@
 //  ClothingSizeConverter
 //
 //  Clothing size converter for shirts, dresses, and jackets with plus-size support
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
@@ -38,7 +38,7 @@ import Foundation
 ///
 /// // Convert men's letter size
 /// let menResult = converter.convert(size: "L", from: .us, to: .eu, gender: .men)
-/// // Result: "48"
+/// // Result: "52"
 ///
 /// // Plus size conversion
 /// let plusResult = converter.convert(size: "2X", from: .us, to: .eu, gender: .men)
@@ -52,12 +52,7 @@ internal struct ClothingConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] {
         return [.us, .uk, .eu, .fr, .it, .au]
     }
-    
-    /// Whether gender context is required for accurate conversion
-    var requiresGender: Bool {
-        return true
-    }
-    
+
     // MARK: - Conversion Tables
     
     /// Men's clothing size conversion table
@@ -67,14 +62,14 @@ internal struct ClothingConverter: SizeConverterProtocol {
     /// All values represent equivalent US men's chest measurements for cross-reference.
     private let menClothingConversions: [SizeSystem: [String: Double]] = [
         .us: [
-            "XS": 32, "S": 34, "M": 36, "L": 38, "XL": 40, "XXL": 42, "XXXL": 44,
+            "XS": 34, "S": 36, "M": 38, "L": 42, "XL": 46, "XXL": 50, "XXXL": 52,
             // Plus sizes
             "1X": 42, "2X": 44, "3X": 46, "4X": 48, "5X": 50,
             // Numeric sizes
             "32": 32, "34": 34, "36": 36, "38": 38, "40": 40, "42": 42, "44": 44, "46": 46, "48": 48, "50": 50, "52": 52
         ],
         .uk: [
-            "XS": 32, "S": 34, "M": 36, "L": 38, "XL": 40, "XXL": 42, "XXXL": 44,
+            "XS": 34, "S": 36, "M": 38, "L": 42, "XL": 46, "XXL": 50, "XXXL": 52,
             "32": 32, "34": 34, "36": 36, "38": 38, "40": 40, "42": 42, "44": 44, "46": 46
         ],
         .eu: [
@@ -87,7 +82,7 @@ internal struct ClothingConverter: SizeConverterProtocol {
             "42": 32, "44": 34, "46": 36, "48": 38, "50": 40, "52": 42, "54": 44, "56": 46, "58": 48, "60": 50
         ],
         .au: [
-            "XS": 32, "S": 34, "M": 36, "L": 38, "XL": 40, "XXL": 42,
+            "XS": 34, "S": 36, "M": 38, "L": 42, "XL": 46, "XXL": 50,
             "32": 32, "34": 34, "36": 36, "38": 38, "40": 40, "42": 42, "44": 44, "46": 46
         ]
     ]
@@ -156,13 +151,13 @@ internal struct ClothingConverter: SizeConverterProtocol {
     /// 2. Validate source and target systems are supported
     /// 3. Handle same-system conversions with validation
     /// 4. Convert via normalized US size reference
-    /// 5. Apply fallback formulas for EU conversions (US + 10 men's, US + 30 women's)
+    /// 5. Apply fallback formulas for EU conversions (US + 10 men's, US + 32 women's)
     /// 6. Generate confidence scores and helpful notes
     ///
     /// ## Fallback Conversions
     /// When exact table matches aren't found, standard formulas are applied:
     /// - **Men's US to EU**: Add 10 (US 38 → EU 48)
-    /// - **Women's US to EU**: Add 30 (US 8 → EU 38)
+    /// - **Women's US to EU**: Add 32 (US 8 → EU 40)
     ///
     /// - Parameters:
     ///   - size: Source clothing size to convert
@@ -233,52 +228,38 @@ internal struct ClothingConverter: SizeConverterProtocol {
             )
         }
         
-        // Find the target size by matching the normalized US size
-        for (targetSize, targetUSSize) in toTable {
-            if abs(targetUSSize - usSize) < 0.01 {
-                return ConversionResult(
-                    originalSize: size,
-                    convertedSize: targetSize,
-                    fromSystem: from,
-                    toSystem: to,
-                    type: type,
-                    gender: gender,
-                    confidence: 0.9
-                )
-            }
-        }
-        
-        // If exact match not found in table, try standard conversion formulas
-        if to == .eu && gender == .men {
-            // US to EU men's clothing: add 10 to the US size
-            let euNumericSize = Int(usSize) + 10
+        // Find the target size by matching the normalized US size. A
+        // deterministic reverse lookup is required because several keys can
+        // share a value (e.g. men's US "XXL", "1X" and "42" are all chest 42).
+        if let targetSize = toTable.sizeKey(matching: usSize, preferring: normalizedSize) {
             return ConversionResult(
                 originalSize: size,
-                convertedSize: String(euNumericSize),
+                convertedSize: targetSize,
+                fromSystem: from,
+                toSystem: to,
+                type: type,
+                gender: gender,
+                confidence: 0.9
+            )
+        }
+        
+        // If exact match not found in table, fall back to the standard offset
+        // between US and EU numeric sizing (matches the tables above: +10 for
+        // men's chest sizing, +32 for women's dress sizing).
+        if to == .eu {
+            let offset = gender == .women ? 32 : 10
+            return ConversionResult(
+                originalSize: size,
+                convertedSize: String(Int(usSize) + offset),
                 fromSystem: from,
                 toSystem: to,
                 type: type,
                 gender: gender,
                 confidence: 0.85,
-                notes: "Converted using standard US to EU sizing (+10)"
+                notes: "Converted using standard US to EU sizing (+\(offset))"
             )
         }
-        
-        if to == .eu && gender == .women {
-            // US to EU women's clothing: add 30 to the US size
-            let euNumericSize = Int(usSize) + 30
-            return ConversionResult(
-                originalSize: size,
-                convertedSize: String(euNumericSize),
-                fromSystem: from,
-                toSystem: to,
-                type: type,
-                gender: gender,
-                confidence: 0.85,
-                notes: "Converted using standard US to EU sizing (+30)"
-            )
-        }
-        
+
         return ConversionResult(
             originalSize: size,
             fromSystem: from,

@@ -2,7 +2,7 @@
 //  HatConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
@@ -38,11 +38,7 @@ internal struct HatConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] {
         return [.us, .uk, .eu, .cm, .inches]
     }
-    
-    var requiresGender: Bool {
-        return false
-    }
-    
+
     /// Hat size conversion table with fractional decimal equivalents
     private let conversions: [SizeSystem: [String: Double]] = [
         .us: ["6.5": 6.5, "6.625": 6.625, "6.75": 6.75, "6.875": 6.875, "7": 7, "7.125": 7.125, "7.25": 7.25, "7.375": 7.375, "7.5": 7.5, "7.625": 7.625, "7.75": 7.75, "7.875": 7.875, "8": 8],
@@ -72,19 +68,17 @@ internal struct HatConverter: SizeConverterProtocol {
             )
         }
         
-        for (targetSize, targetUSSize) in toTable {
-            if abs(targetUSSize - usSize) < 0.01 {
-                return ConversionResult(
-                    originalSize: size,
-                    convertedSize: targetSize,
-                    fromSystem: from,
-                    toSystem: to,
-                    type: type,
-                    gender: gender,
-                    confidence: 0.95,
-                    notes: "Hat sizing based on head circumference"
-                )
-            }
+        if let targetSize = toTable.sizeKey(matching: usSize, preferring: normalized) {
+            return ConversionResult(
+                originalSize: size,
+                convertedSize: targetSize,
+                fromSystem: from,
+                toSystem: to,
+                type: type,
+                gender: gender,
+                confidence: 0.95,
+                notes: "Hat sizing based on head circumference"
+            )
         }
         
         return ConversionResult(

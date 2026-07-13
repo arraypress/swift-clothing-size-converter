@@ -2,9 +2,8 @@
 //  SizeConverterProtocol.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
-
 
 /// Protocol for size converters
 internal protocol SizeConverterProtocol: Sendable {
@@ -34,6 +33,4 @@ internal protocol SizeConverterProtocol: Sendable {
     /// Get supported systems
     var supportedSystems: [SizeSystem] { get }
     
-    /// Whether gender is required for this converter
-    var requiresGender: Bool { get }
 }

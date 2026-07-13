@@ -2,7 +2,7 @@
 //  ChildrenConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import Foundation
@@ -13,7 +13,6 @@ import Foundation
 /// Each age group uses different sizing conventions based on age and height.
 internal struct ChildrenConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] { [.us, .uk, .eu, .fr] }
-    var requiresGender: Bool { true }
     
     // Age-based conversion tables for different children's categories
     private let infantConversions: [SizeSystem: [String: Double]] = [
@@ -50,18 +49,17 @@ internal struct ChildrenConverter: SizeConverterProtocol {
     
     func convertWithDetails(size: String, from: SizeSystem, to: SizeSystem, gender: Gender, type: SizeType) -> ConversionResult {
         let normalized = size.normalizedSize
-        
-        let conversions: [SizeSystem: [String: Double]]
-        
-        if normalized.matches(SizePatterns.infantSize) {
-            conversions = infantConversions
-        } else if normalized.matches(SizePatterns.toddlerSize) {
-            conversions = toddlerConversions
-        } else if normalized.matches(SizePatterns.youthSize) {
-            conversions = youthConversions
-        } else if normalized.matches(SizePatterns.childrenSize) {
-            conversions = childrenConversions
-        } else {
+
+        // Pick the age-group table from the caller's gender first, then fall back
+        // to any table that actually contains the size. Selecting by gender is
+        // what makes non-US inputs work: a European infant height ("62"), a UK
+        // toddler ("3"), or an EU children's height ("104") is indistinguishable
+        // from a plain children's number by format alone, so the old regex-based
+        // routing silently mis-classified every non-US children's size.
+        let allTables = [infantConversions, toddlerConversions, childrenConversions, youthConversions]
+        let ordered = table(for: gender).map { [$0] + allTables } ?? allTables
+
+        guard let conversions = ordered.first(where: { $0[from]?[normalized] != nil }) else {
             return ConversionResult(
                 originalSize: size,
                 fromSystem: from,
@@ -71,7 +69,7 @@ internal struct ChildrenConverter: SizeConverterProtocol {
                 error: .invalidFormat(size, expectedFormat: "3M, 2T, 4, XS")
             )
         }
-        
+
         guard let fromTable = conversions[from],
               let usSize = fromTable[normalized],
               let toTable = conversions[to] else {
@@ -85,21 +83,19 @@ internal struct ChildrenConverter: SizeConverterProtocol {
             )
         }
         
-        for (targetSize, targetUSSize) in toTable {
-            if abs(targetUSSize - usSize) < 0.01 {
-                return ConversionResult(
-                    originalSize: size,
-                    convertedSize: targetSize,
-                    fromSystem: from,
-                    toSystem: to,
-                    type: type,
-                    gender: gender,
-                    confidence: 0.9,
-                    notes: "Children's sizing based on age/height"
-                )
-            }
+        if let targetSize = toTable.sizeKey(matching: usSize, preferring: normalized) {
+            return ConversionResult(
+                originalSize: size,
+                convertedSize: targetSize,
+                fromSystem: from,
+                toSystem: to,
+                type: type,
+                gender: gender,
+                confidence: 0.9,
+                notes: "Children's sizing based on age/height"
+            )
         }
-        
+
         return ConversionResult(
             originalSize: size,
             fromSystem: from,
@@ -108,6 +104,18 @@ internal struct ChildrenConverter: SizeConverterProtocol {
             gender: gender,
             error: .sizeOutOfRange(size, validRange: "Age-appropriate sizes")
         )
+    }
+
+    /// The conversion table implied by a children's gender category, or `nil`
+    /// for non-children genders (in which case the caller scans all tables).
+    private func table(for gender: Gender) -> [SizeSystem: [String: Double]]? {
+        switch gender {
+        case .infant:   return infantConversions
+        case .toddler:  return toddlerConversions
+        case .youth:    return youthConversions
+        case .children: return childrenConversions
+        default:        return nil
+        }
     }
     
     func isValid(size: String, system: SizeSystem, gender: Gender) -> Bool {

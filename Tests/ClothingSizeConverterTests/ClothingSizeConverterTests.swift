@@ -3,7 +3,7 @@
 //  ClothingSizeConverter
 //
 //  Comprehensive test suite for clothing size conversion
-//  Created on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
 
 import XCTest
@@ -229,9 +229,9 @@ final class ClothingSizeConverterTests: XCTestCase {
         let menResult = ClothingSizeConverter.convert("38", from: .us, to: .eu, type: .clothing, gender: .men)
         XCTAssertEqual(menResult, "48", "US Men's 38 should convert to EU 48")
         
-        // Letter size conversion - M maps to US 36, which maps to EU 46
+        // Letter size conversion - M maps to US chest 38, which maps to EU 48
         let letterResult = ClothingSizeConverter.convert("M", from: .us, to: .eu, type: .clothing, gender: .men)
-        XCTAssertEqual(letterResult, "46", "US Men's M should convert to EU 46")
+        XCTAssertEqual(letterResult, "48", "US Men's M should convert to EU 48")
     }
     
     func testClothingValidation() {
@@ -284,13 +284,13 @@ final class ClothingSizeConverterTests: XCTestCase {
         let result = ClothingSizeConverter.convert("7", from: .us, to: .uk, type: .ring)
         XCTAssertEqual(result, "N", "US ring size 7 should convert to UK N")
         
-        // US to EU ring size
+        // US to EU ring size (EU = inside circumference in mm, ISO 8653)
         let euResult = ClothingSizeConverter.convert("6.5", from: .us, to: .eu, type: .ring)
-        XCTAssertEqual(euResult, "51", "US ring size 6.5 should convert to EU 51")
-        
+        XCTAssertEqual(euResult, "53", "US ring size 6.5 should convert to EU 53")
+
         // Metric conversions
         let cmResult = ClothingSizeConverter.convert("7", from: .us, to: .cm, type: .ring)
-        XCTAssertEqual(cmResult, "4.98", "US ring size 7 should convert to 4.98cm")
+        XCTAssertEqual(cmResult, "5.44", "US ring size 7 should convert to 5.44cm circumference")
     }
     
     func testRingValidation() {
@@ -589,8 +589,10 @@ final class ClothingSizeConverterTests: XCTestCase {
     func testEdgeCaseConversions() {
         // Test boundary sizes
         let tinyShoe = ClothingSizeConverter.convert("4", from: .us, to: .eu, type: .shoe, gender: .women)
+        XCTAssertEqual(tinyShoe, "34", "Smallest women's shoe should convert")
         let hugeShoe = ClothingSizeConverter.convert("16", from: .us, to: .eu, type: .shoe, gender: .women)
-        
+        XCTAssertEqual(hugeShoe, "46", "Largest women's shoe should convert")
+
         // Test unusual but valid inputs
         let paddedSize = ClothingSizeConverter.convert("  9.5  ", from: .us, to: .eu, type: .shoe, gender: .women)
         XCTAssertEqual(paddedSize, "39.5", "Should handle padded input")
@@ -604,9 +606,9 @@ final class ClothingSizeConverterTests: XCTestCase {
     }
 
     func testUnsupportedSystemCombinations() {
-        // Test systems that might not support certain types
+        // Swimwear doesn't support JP/KR, so this should fail gracefully (nil).
         let result = ClothingSizeConverter.convert("M", from: .jp, to: .kr, type: .swimwear, gender: .women)
-        // Should handle gracefully
+        XCTAssertNil(result, "Unsupported system pair should return nil, not crash")
     }
     
     func testCommonUserWorkflows() {

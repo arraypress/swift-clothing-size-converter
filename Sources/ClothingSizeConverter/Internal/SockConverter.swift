@@ -2,16 +2,14 @@
 //  SockConverter.swift
 //  ClothingSizeConverter
 //
-//  Created by David Sherlock on 02/08/2025.
+//  Created by David Sherlock on 2026.
 //
-
 
 /// Converter for sock sizes using shoe size logic
 ///
 /// Socks typically follow the same sizing as shoes since they're based on foot size.
 internal struct SockConverter: SizeConverterProtocol {
     var supportedSystems: [SizeSystem] { [.us, .uk, .eu] }
-    var requiresGender: Bool { false }
     
     func convert(size: String, from: SizeSystem, to: SizeSystem, gender: Gender) -> String? {
         let shoeConverter = ShoeConverter()
