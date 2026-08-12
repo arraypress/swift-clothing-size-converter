@@ -130,15 +130,25 @@ internal struct ChildrenConverter: SizeConverterProtocol {
         return false
     }
     
+    /// Sizes for the age band the given size belongs to.
+    ///
+    /// Which ladder applies is read from the size itself — months, toddler
+    /// years, youth letters or youth numbers — because suggesting 24M to
+    /// somebody sizing a ten-year-old helps nobody. The anchors are US, and
+    /// any other system is reached by conversion so a suggestion cannot be
+    /// one `convert` would refuse.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
+        let anchors: [String]
         if size.contains("M") {
-            return ["3M", "6M", "12M", "18M", "24M"]
+            anchors = ["3M", "6M", "12M", "18M", "24M"]
         } else if size.contains("T") {
-            return ["2T", "3T", "4T", "5T"]
+            anchors = ["2T", "3T", "4T", "5T"]
         } else if size.matches(SizePatterns.youthSize) {
-            return ["XS", "S", "M", "L", "XL"]
+            anchors = ["XS", "S", "M", "L", "XL"]
         } else {
-            return ["4", "6", "8", "10", "12", "14"]
+            anchors = ["4", "6", "8", "10", "12", "14"]
         }
+        guard system != .us else { return anchors }
+        return anchors.compactMap { convert(size: $0, from: .us, to: system, gender: gender) }
     }
 }

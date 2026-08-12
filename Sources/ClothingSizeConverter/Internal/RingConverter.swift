@@ -95,7 +95,14 @@ internal struct RingConverter: SizeConverterProtocol {
         return conversions[system]?.keys.contains(size.normalizedSize) == true
     }
     
+    /// The sizes this system actually has, in order.
+    ///
+    /// This used to return US numerals whatever was asked for, so a UK ring
+    /// size — which is a letter — was answered with "6, 6.5, 7, 7.5, 8". The
+    /// table is right here; ordering its keys by the US size they map to
+    /// sorts letters and numerals alike without special-casing either.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
-        return ["6", "6.5", "7", "7.5", "8"]
+        guard let table = conversions[system] else { return [] }
+        return table.sorted { $0.value < $1.value }.map(\.key)
     }
 }

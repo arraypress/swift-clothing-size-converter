@@ -196,4 +196,58 @@ final class AuditRegressionTests: XCTestCase {
             XCTAssertFalse(s.hasSuffix(".0"), "Suggestion \(s) should not carry a trailing .0")
         }
     }
+
+    // MARK: - Suggestions
+
+    /// Every suggester but one ignored the system it was handed and returned
+    /// US sizes. A UK ring size is a letter, so "no US equivalent for UK 8"
+    /// came with the hint "valid UK sizes: 6, 6.5, 7, 7.5, 8" — three
+    /// statements in one line, none of them useful.
+    func testRingSuggestionsAreInTheSystemAskedFor() {
+        let uk = ClothingSizeConverter.getSuggestions(for: "8", type: .ring, system: .uk, gender: .unisex)
+        XCTAssertFalse(uk.isEmpty)
+        XCTAssertTrue(uk.contains("P"), "UK ring sizes are letters: \(uk)")
+        XCTAssertFalse(uk.contains("6.5"), "that is a US size")
+
+        let us = ClothingSizeConverter.getSuggestions(for: "8", type: .ring, system: .us, gender: .unisex)
+        XCTAssertTrue(us.contains("8"), "US ring sizes are numerals: \(us)")
+    }
+
+    func testRingSuggestionsRunSmallToLarge() {
+        let uk = ClothingSizeConverter.getSuggestions(for: "P", type: .ring, system: .uk, gender: .unisex)
+        XCTAssertEqual(uk.first, "F")
+        XCTAssertEqual(uk.last, "X")
+    }
+
+    func testHatSuggestionsAreNotInchesWhenCentimetresWereAskedFor() {
+        let eu = ClothingSizeConverter.getSuggestions(for: "56", type: .hat, system: .eu, gender: .unisex)
+        XCTAssertTrue(eu.contains("56"), "EU hats are head circumference in cm: \(eu)")
+        XCTAssertFalse(eu.contains("7.125"), "that is a US size")
+    }
+
+    /// The invariant behind all of it: a suggestion the converter would then
+    /// refuse is worse than no suggestion, because it sends somebody to try
+    /// a size that cannot work.
+    func testNoSuggestionIsOneTheConverterWouldRefuse() {
+        let combinations: [(SizeType, SizeSystem, Gender)] = [
+            (.ring, .uk, .unisex), (.ring, .us, .unisex), (.ring, .jp, .unisex),
+            (.hat, .eu, .unisex), (.hat, .us, .unisex),
+            (.glove, .uk, .unisex), (.glove, .eu, .unisex),
+            (.shoe, .uk, .men), (.shoe, .eu, .women),
+            (.clothing, .uk, .women), (.clothing, .eu, .men),
+            (.belt, .eu, .men), (.watch, .eu, .unisex), (.sock, .uk, .men),
+            (.bra, .uk, .women), (.swimwear, .eu, .women),
+        ]
+        for (type, system, gender) in combinations {
+            let suggestions = ClothingSizeConverter.getSuggestions(
+                for: "8", type: type, system: system, gender: gender
+            )
+            for suggestion in suggestions {
+                XCTAssertTrue(
+                    ClothingSizeConverter.isValid(suggestion, for: type, system: system, gender: gender),
+                    "\(type.rawValue)/\(system.rawValue): suggested \(suggestion), which is not a valid size there"
+                )
+            }
+        }
+    }
 }

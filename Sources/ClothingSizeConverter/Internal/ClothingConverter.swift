@@ -302,13 +302,17 @@ internal struct ClothingConverter: SizeConverterProtocol {
     ///   - system: Target sizing system
     ///   - gender: Gender context for suggestions
     /// - Returns: Array of suggested valid sizes
+    /// Sizes this system actually uses, derived rather than listed.
+    ///
+    /// The anchors are US sizes; every other system's suggestions come from
+    /// running them through this converter, so a suggestion can never be one
+    /// that `convert` would then refuse.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
-        // Return common sizes as suggestions
-        if gender == .women {
-            return ["XS", "S", "M", "L", "XL", "6", "8", "10", "12", "14"]
-        } else {
-            return ["S", "M", "L", "XL", "34", "36", "38", "40", "42"]
-        }
+        let anchors = gender == .women
+            ? ["XS", "S", "M", "L", "XL", "6", "8", "10", "12", "14"]
+            : ["S", "M", "L", "XL", "34", "36", "38", "40", "42"]
+        guard system != .us else { return anchors }
+        return anchors.compactMap { convert(size: $0, from: .us, to: system, gender: gender) }
     }
     
 }

@@ -241,8 +241,17 @@ internal struct BraConverter: SizeConverterProtocol {
     ///   - system: Target sizing system
     ///   - gender: Gender context (ignored)
     /// - Returns: Array of suggested valid bra sizes
+    /// Sizes this system actually uses, derived rather than listed.
+    ///
+    /// The anchors below are US sizes. Any other system's suggestions come
+    /// from running them through this converter, so they cannot contradict
+    /// what `convert` will accept — the previous hardcoded list was US
+    /// numbers offered as the answer for every system.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
-        return ["32A", "34B", "36C", "38D"]
+        guard system != .us else { return ["32A", "34B", "36C", "38D"] }
+        return ["32A", "34B", "36C", "38D"].compactMap {
+            convert(size: $0, from: .us, to: system, gender: gender)
+        }
     }
     
     // MARK: - Private Helper Methods

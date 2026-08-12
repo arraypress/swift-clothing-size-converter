@@ -96,11 +96,17 @@ internal struct HatConverter: SizeConverterProtocol {
         return conversions[system]?.keys.contains(normalized) == true
     }
     
+    /// The sizes this system actually has, in order.
+    ///
+    /// A hat in EU is a head circumference in centimetres and in the US it is
+    /// a fraction of an inch. Answering both with "7, 7.125, 7.25, 7.5" was
+    /// right for one of them.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
         if size.contains("/") {
             return [normalizeFractionalSize(size)]
         }
-        return ["7", "7.125", "7.25", "7.5"]
+        guard let table = conversions[system] else { return [] }
+        return table.sorted { $0.value < $1.value }.map(\.key)
     }
     
     /// Convert fractional hat sizes to decimal equivalents

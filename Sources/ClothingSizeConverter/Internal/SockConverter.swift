@@ -26,7 +26,16 @@ internal struct SockConverter: SizeConverterProtocol {
         return shoeConverter.isValid(size: size, system: system, gender: gender)
     }
     
+    /// Sizes this system actually uses, derived rather than listed.
+    ///
+    /// The anchors below are US sizes. Any other system's suggestions come
+    /// from running them through this converter, so they cannot contradict
+    /// what `convert` will accept — the previous hardcoded list was US
+    /// numbers offered as the answer for every system.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
-        return ["6", "7", "8", "9", "10", "11", "12"]
+        guard system != .us else { return ["6", "7", "8", "9", "10", "11", "12"] }
+        return ["6", "7", "8", "9", "10", "11", "12"].compactMap {
+            convert(size: $0, from: .us, to: system, gender: gender)
+        }
     }
 }

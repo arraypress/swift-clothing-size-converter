@@ -133,11 +133,16 @@ internal struct SwimwearConverter: SizeConverterProtocol {
         return conversions[system]?.keys.contains(size.normalizedSize) == true
     }
     
+    /// Sizes this system actually uses, derived rather than listed.
+    ///
+    /// The anchors are US sizes; every other system's suggestions come from
+    /// running them through this converter, so a suggestion can never be one
+    /// that `convert` would then refuse.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
-        if gender == .women {
-            return ["XS", "S", "M", "L", "XL", "32B", "34B", "36C"]
-        } else {
-            return ["S", "M", "L", "XL", "30", "32", "34", "36"]
-        }
+        let anchors = gender == .women
+            ? ["XS", "S", "M", "L", "XL", "32B", "34B", "36C"]
+            : ["S", "M", "L", "XL", "30", "32", "34", "36"]
+        guard system != .us else { return anchors }
+        return anchors.compactMap { convert(size: $0, from: .us, to: system, gender: gender) }
     }
 }

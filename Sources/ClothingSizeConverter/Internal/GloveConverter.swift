@@ -36,7 +36,20 @@ internal struct GloveConverter: SizeConverterProtocol {
         return conversions[system]?.keys.contains(size.normalizedSize) == true
     }
     
+    /// The sizes this system actually has.
+    ///
+    /// EU gloves are numbered and UK ones are lettered, so the one hardcoded
+    /// list could not have been right for both. The table maps every spelling
+    /// onto a letter, so ordering by that letter puts numerals in size order
+    /// rather than alphabetical.
     func getSuggestions(for size: String, system: SizeSystem, gender: Gender) -> [String] {
-        return ["XS", "S", "M", "L", "XL"]
+        guard let table = conversions[system] else { return [] }
+        let ladder = ["XS", "S", "M", "L", "XL"]
+        return table.keys.sorted { left, right in
+            let leftRank = ladder.firstIndex(of: table[left] ?? "") ?? 0
+            let rightRank = ladder.firstIndex(of: table[right] ?? "") ?? 0
+            if leftRank != rightRank { return leftRank < rightRank }
+            return left.count == right.count ? left < right : left.count < right.count
+        }
     }
 }
